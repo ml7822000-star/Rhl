@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RHL — Provider Directory</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f5;--card:#fff;--primary:#2563eb;--primary-dark:#1d4ed8;
+  --text:#1e293b;--text2:#64748b;--border:#e2e8f0;--chip:#e0e7ff;
+  --chip-active:#2563eb;--chip-text:#3730a3;--gold:#f59e0b;
+  --green:#22c55e;--red:#ef4444;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;
+  padding-bottom:80px;overflow-x:hidden}
+
+/* Header */
+.header{position:sticky;top:0;z-index:50;background:#fff;
+  border-bottom:1px solid var(--border);padding:12px 16px}
+.header h1{font-size:1.25rem;font-weight:700;color:var(--primary)}
+.header .subtitle{font-size:.75rem;color:var(--text2)}
+
+/* Search */
+.search-wrap{padding:12px 16px 0}
+.search-wrap input{width:100%;padding:10px 14px;border:1px solid var(--border);
+  border-radius:10px;font-size:.95rem;outline:none;background:#fff}
+.search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+
+/* Filter chips */
+.chips{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:.8rem;
+  font-weight:500;background:var(--chip);color:var(--chip-text);
+  border:none;cursor:pointer;transition:.15s}
+.chip.active{background:var(--chip-active);color:#fff}
+
+/* Stats */
+.stats{padding:4px 16px 8px;font-size:.75rem;color:var(--text2)}
+
+/* Cards */
+.cards{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border-radius:14px;padding:16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative}
+.card .badge{position:absolute;top:12px;right:12px;font-size:.7rem;
+  background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:600}
+.card .name{font-size:1rem;font-weight:700;margin-bottom:2px}
+.card .specialty{font-size:.85rem;color:var(--primary);font-weight:500}
+.card .detail{font-size:.8rem;color:var(--text2);margin-top:2px}
+.card .notes-box{margin-top:8px;padding:8px 12px;border-left:3px solid var(--gold);
+  background:#fffbeb;border-radius:0 8px 8px 0;font-size:.8rem;color:#78350f}
+.card .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.card .actions button{flex:1;min-width:0;padding:8px 4px;border:none;border-radius:8px;
+  font-size:.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:4px;transition:.15s}
+.btn-call{background:#dcfce7;color:#15803d}
+.btn-wa{background:#d1fae5;color:#047857}
+.btn-edit{background:#e0e7ff;color:#3730a3}
+.btn-share{background:#f1f5f9;color:#475569}
+.card .actions button:active{transform:scale(.95)}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;
+  border-radius:50%;background:var(--primary);color:#fff;border:none;
+  font-size:1.75rem;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(37,99,235,.4);cursor:pointer;z-index:40;
+  transition:.15s}
+.fab:active{transform:scale(.9)}
+
+/* ===== FULL-SCREEN MODAL (fixes Android keyboard issue) ===== */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.4);z-index:100}
+.modal-overlay.open{display:block}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;
+  background:#fff;z-index:101;display:none;flex-direction:column}
+.modal.open{display:flex}
+.modal-header{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+  background:#fff;position:sticky;top:0;z-index:1}
+.modal-header h2{font-size:1.1rem;font-weight:700}
+.modal-close{background:none;border:none;font-size:1.5rem;color:var(--text2);
+  cursor:pointer;padding:4px 8px;line-height:1}
+.modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.modal-body label{display:block;font-size:.8rem;font-weight:600;
+  color:var(--text2);margin-bottom:4px;margin-top:14px}
+.modal-body label:first-child{margin-top:0}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;
+  padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:.95rem;outline:none;background:#fff;font-family:inherit}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{
+  border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.modal-body textarea{min-height:80px;resize:vertical}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;
+  background:#fff}
+.modal-footer button{width:100%;padding:12px;border:none;border-radius:10px;
+  background:var(--primary);color:#fff;font-size:1rem;font-weight:600;
+  cursor:pointer;transition:.15s}
+.modal-footer button:active{background:var(--primary-dark)}
+
+/* Share modal */
+.share-modal{position:fixed;bottom:0;left:0;right:0;background:#fff;
+  border-radius:16px 16px 0 0;padding:20px 16px;z-index:102;display:none;
+  box-shadow:0 -4px 20px rgba(0,0,0,.1)}
+.share-modal.open{display:block}
+.share-options{display:flex;gap:12px;margin-top:12px}
+.share-options button{flex:1;padding:12px;border:none;border-radius:10px;
+  font-size:.9rem;font-weight:600;cursor:pointer}
+.share-wa-btn{background:#25d366;color:#fff}
+.share-native-btn{background:#f1f5f9;color:var(--text)}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty .icon{font-size:3rem;margin-bottom:12px}
+
+/* Responsive tweaks */
+@media(min-width:480px){
+  .cards{max-width:480px;margin:0 auto}
+  .search-wrap,.chips,.stats{max-width:480px;margin-left:auto;margin-right:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>RHL Directory</h1>
+  <div class="subtitle">Mental Health Provider Referrals</div>
+</div>
+
+<div class="search-wrap">
+  <input type="text" id="searchInput" placeholder="Search name, specialty, location, notes…">
+</div>
+
+<div class="chips" id="chips"></div>
+<div class="stats" id="stats"></div>
+<div class="cards" id="cards"></div>
+
+<button class="fab" id="fabAdd" aria-label="Add provider">+</button>
+
+<!-- Overlay -->
+<div class="modal-overlay" id="modalOverlay"></div>
+
+<!-- Add / Edit Modal — full-screen for Android keyboard fix -->
+<div class="modal" id="modal">
+  <div class="modal-header">
+    <h2 id="modalTitle">Add Provider</h2>
+    <button class="modal-close" id="modalClose">&times;</button>
+  </div>
+  <div class="modal-body">
+    <label for="fName">Name *</label>
+    <input type="text" id="fName" autocomplete="off">
+
+    <label for="fSpecialty">Specialty *</label>
+    <input type="text" id="fSpecialty" placeholder="e.g. CBT, Anxiety, Trauma" autocomplete="off">
+
+    <label for="fPhone">Phone</label>
+    <input type="tel" id="fPhone" autocomplete="off">
+
+    <label for="fEmail">Email</label>
+    <input type="email" id="fEmail" autocomplete="off">
+
+    <label for="fLocation">Location</label>
+    <input type="text" id="fLocation" autocomplete="off">
+
+    <label for="fInsurance">Insurance</label>
+    <input type="text" id="fInsurance" autocomplete="off">
+
+    <label for="fLanguages">Languages</label>
+    <input type="text" id="fLanguages" placeholder="e.g. English, Arabic" autocomplete="off">
+
+    <label for="fGender">Gender</label>
+    <select id="fGender">
+      <option value="">—</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label for="fAvailability">Availability</label>
+    <input type="text" id="fAvailability" placeholder="e.g. Weekdays, Evenings" autocomplete="off">
+
+    <label for="fWebsite">Website</label>
+    <input type="url" id="fWebsite" autocomplete="off">
+
+    <label for="fNotes">Notes</label>
+    <textarea id="fNotes" placeholder="Additional notes…"></textarea>
+  </div>
+  <div class="modal-footer">
+    <button id="modalSave">Save Provider</button>
+  </div>
+</div>
+
+<!-- Share bottom sheet -->
+<div class="share-modal" id="shareModal">
+  <h3 style="font-size:1rem">Share Provider</h3>
+  <div class="share-options">
+    <button class="share-wa-btn" id="shareWA">WhatsApp</button>
+    <button class="share-native-btn" id="shareNative">Share…</button>
+  </div>
+</div>
+
+<script>
+// ============== SEED DATA ==============
+const SEED = [
+  {id:1,name:"Dr. Sarah Ahmad",specialty:"Anxiety, Depression, CBT",phone:"+962791000001",email:"sarah.ahmad@clinic.jo",location:"Amman, Jordan",insurance:"National Insurance",languages:"Arabic, English",gender:"Female",availability:"Sun–Thu 9–5",website:"",notes:"Specializes in young adults"},
+  {id:2,name:"Dr. Omar Khalil",specialty:"Trauma, EMDR, PTSD",phone:"+962791000002",email:"omar.k@mentalhealth.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic, English",gender:"Male",availability:"Mon–Fri 10–6",website:"",notes:""},
+  {id:3,name:"Dr. Layla Mansour",specialty:"OCD, Anxiety, Exposure Therapy",phone:"+962791000003",email:"layla.m@therapy.jo",location:"Irbid, Jordan",insurance:"Self-pay",languages:"Arabic",gender:"Female",availability:"Sun–Wed 9–3",website:"",notes:"Accepts online sessions"},
+  {id:4,name:"Dr. Fadi Nasser",specialty:"Couples, Family Therapy",phone:"+962791000004",email:"fadi.n@familytherapy.jo",location:"Amman, Jordan",insurance:"National Insurance, Private",languages:"Arabic, English, French",gender:"Male",availability:"Mon–Sat 11–7",website:"",notes:"15+ years experience with couples"},
+  {id:5,name:"Dr. Rania Haddad",specialty:"Depression, Mood Disorders",phone:"+962791000005",email:"rania.h@wellbeing.jo",location:"Zarqa, Jordan",insurance:"Self-pay",languages:"Arabic, English",gender:"Female",availability:"Sun–Thu 8–4",website:"",notes:""},
+  {id:6,name:"Dr. Khaled Yousef",specialty:"Addiction, Substance Abuse",phone:"+962791000006",email:"khaled.y@recovery.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic",gender:"Male",availability:"Daily 9–9",website:"",notes:"Runs group therapy sessions on Saturdays"},
+  {id:7,name:"Dr. Nour Sabbagh",specialty:"Child Psychology, ADHD",phone:"+962791000007",email:"nour.s@childpsych.jo",location:"Amman, Jordan",insurance:"Private",languages:"Arabic, English",gender:"Female",availability:"Sun–Thu 10–5",website:"",notes:"Ages 4–16"},
+  {id:8,name:"Dr. Mazen Tariq",specialty:"Anxiety, Panic Disorders, CBT",phone:"+962791000008",email:"mazen.t@cbt.jo",location:"Aqaba, Jordan",insurance:"Self-pay, National Insurance",languages:"Arabic, English",gender:"Male",availability:"Mon–Fri 9–5",website:"",notes:""},
+  {id:9,name:"Dr. Hana Qasem",specialty:"Trauma, Grief Counseling",phone:"+962791000009",email:"hana.q@grief.jo",location:"Amman, Jordan",insurance:"National Insurance",languages:"Arabic, English",gender:"Female",availability:"Sun–Thu 8–3",website:"",notes:"Also does workshops for families"},
+  {id:10,name:"Dr. Basem Awad",specialty:"Couples, Relationship Issues",phone:"+962791000010",email:"basem.a@relate.jo",location:"Madaba, Jordan",insurance:"Self-pay",languages:"Arabic",gender:"Male",availability:"Weekdays 10–6",website:"",notes:""},
+  {id:11,name:"Dr. Dina Farah",specialty:"OCD, Anxiety, ACT",phone:"+962791000011",email:"dina.f@ocdclinic.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic, English",gender:"Female",availability:"Sun–Wed 9–5",website:"",notes:"Acceptance and Commitment Therapy specialist"},
+  {id:12,name:"Dr. Sami Halabi",specialty:"Depression, Bipolar Disorder",phone:"+962791000012",email:"sami.h@mood.jo",location:"Amman, Jordan",insurance:"Private, National Insurance",languages:"Arabic, English, German",gender:"Male",availability:"Mon–Fri 8–4",website:"",notes:"Studied in Berlin"},
+  {id:13,name:"Dr. Lina Khoury",specialty:"Eating Disorders, Body Image",phone:"+962791000013",email:"lina.k@eating.jo",location:"Amman, Jordan",insurance:"Self-pay",languages:"Arabic, English",gender:"Female",availability:"Sun–Thu 10–6",website:"",notes:"Works with adolescents and adults"},
+  {id:14,name:"Dr. Tareq Masri",specialty:"Anxiety, Social Phobia",phone:"+962791000014",email:"tareq.m@social.jo",location:"Salt, Jordan",insurance:"National Insurance",languages:"Arabic",gender:"Male",availability:"Sun–Thu 9–3",website:"",notes:""},
+  {id:15,name:"Dr. Yasmin Issa",specialty:"Trauma, Women's Mental Health",phone:"+962791000015",email:"yasmin.i@women.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic, English",gender:"Female",availability:"Mon–Sat 9–5",website:"",notes:"Focuses on postpartum and perinatal mental health"},
+];
+
+// ============== SPECIALTY CHIPS ==============
+const SPECIALTIES = ["Anxiety","Trauma","OCD","Couples","Depression","ADHD","Addiction","Eating Disorders","Child","Grief"];
+
+// ============== STATE ==============
+let activeChip = null;
+let editingId = null;
+let sharingProvider = null;
+
+// ============== LOCALSTORAGE HELPERS ==============
+function loadExtra(){ try{return JSON.parse(localStorage.getItem("rhl_extra"))||[]}catch(e){return[]} }
+function saveExtra(arr){ localStorage.setItem("rhl_extra",JSON.stringify(arr)) }
+function loadEdits(){ try{return JSON.parse(localStorage.getItem("rhl_edits"))||{}}catch(e){return{}} }
+function saveEdits(obj){ localStorage.setItem("rhl_edits",JSON.stringify(obj)) }
+
+// ============== MERGE: SEED + extra, with edits applied ==============
+function getAll(){
+  const extra = loadExtra();
+  const edits = loadEdits();
+  const merged = [...SEED,...extra].map(p=>{
+    const e = edits[p.id];
+    return e ? {...p,...e,_edited:true} : p;
+  });
+  return merged;
+}
+
+function nextId(){
+  const all = getAll();
+  return all.length ? Math.max(...all.map(p=>p.id)) + 1 : 1;
+}
+
+// ============== RENDER ==============
+function render(){
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  let providers = getAll();
+
+  // Search: OR across fields
+  if(q){
+    const terms = q.split(/\s+/);
+    providers = providers.filter(p=>{
+      const blob = [p.name,p.specialty,p.location,p.notes,p.phone].join(" ").toLowerCase();
+      return terms.some(t=>blob.includes(t));
+    });
+  }
+
+  // Chip filter
+  if(activeChip){
+    providers = providers.filter(p=>
+      (p.specialty||"").toLowerCase().includes(activeChip.toLowerCase()) ||
+      (p.notes||"").toLowerCase().includes(activeChip.toLowerCase())
+    );
+  }
+
+  // Stats
+  document.getElementById("stats").textContent = providers.length + " provider" + (providers.length!==1?"s":"") + " found";
+
+  // Cards
+  const container = document.getElementById("cards");
+  if(!providers.length){
+    container.innerHTML = '<div class="empty"><div class="icon">🔍</div>No providers found</div>';
+    return;
+  }
+
+  container.innerHTML = providers.map(p=>{
+    const notes = p.notes ? `<div class="notes-box">${esc(p.notes)}</div>` : "";
+    const badge = p._edited ? `<span class="badge">✎ Edited</span>` : "";
+    const details = [
+      p.location ? `📍 ${esc(p.location)}` : "",
+      p.insurance ? `🏥 ${esc(p.insurance)}` : "",
+      p.languages ? `🗣 ${esc(p.languages)}` : "",
+      p.availability ? `🕐 ${esc(p.availability)}` : "",
+      p.gender ? `${p.gender==="Female"?"♀":"♂"} ${esc(p.gender)}` : "",
+    ].filter(Boolean).map(d=>`<div class="detail">${d}</div>`).join("");
+
+    return `<div class="card" data-id="${p.id}">
+      ${badge}
+      <div class="name">${esc(p.name)}</div>
+      <div class="specialty">${esc(p.specialty)}</div>
+      ${details}
+      ${notes}
+      <div class="actions">
+        ${p.phone?`<button class="btn-call" onclick="doCall(${p.id})">📞 Call</button>`:""}
+        ${p.phone?`<button class="btn-wa" onclick="doWA(${p.id})">💬 WA</button>`:""}
+        <button class="btn-edit" onclick="openEdit(${p.id})">✏️ Edit</button>
+        <button class="btn-share" onclick="openShare(${p.id})">📤 Share</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function esc(s){ if(!s)return""; const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+// ============== CHIPS ==============
+function renderChips(){
+  const container = document.getElementById("chips");
+  container.innerHTML = SPECIALTIES.map(s=>
+    `<button class="chip${activeChip===s?" active":""}" data-spec="${s}">${s}</button>`
+  ).join("");
+}
+
+document.getElementById("chips").addEventListener("click",e=>{
+  const chip = e.target.closest(".chip");
+  if(!chip) return;
+  const spec = chip.dataset.spec;
+  activeChip = activeChip === spec ? null : spec;
+  renderChips();
+  render();
+});
+
+// ============== SEARCH ==============
+document.getElementById("searchInput").addEventListener("input",render);
+
+// ============== MODAL OPEN/CLOSE ==============
+function openModal(title){
+  editingId = null;
+  document.getElementById("modalTitle").textContent = title || "Add Provider";
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modalOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+  // Do NOT auto-focus any input — prevents keyboard from opening on Android
+}
+
+function closeModal(){
+  document.getElementById("modal").classList.remove("open");
+  document.getElementById("modalOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+  clearForm();
+  editingId = null;
+}
+
+function clearForm(){
+  ["fName","fSpecialty","fPhone","fEmail","fLocation","fInsurance","fLanguages","fAvailability","fWebsite","fNotes"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("fGender").value = "";
+}
+
+function fillForm(p){
+  document.getElementById("fName").value = p.name||"";
+  document.getElementById("fSpecialty").value = p.specialty||"";
+  document.getElementById("fPhone").value = p.phone||"";
+  document.getElementById("fEmail").value = p.email||"";
+  document.getElementById("fLocation").value = p.location||"";
+  document.getElementById("fInsurance").value = p.insurance||"";
+  document.getElementById("fLanguages").value = p.languages||"";
+  document.getElementById("fGender").value = p.gender||"";
+  document.getElementById("fAvailability").value = p.availability||"";
+  document.getElementById("fWebsite").value = p.website||"";
+  document.getElementById("fNotes").value = p.notes||"";
+}
+
+function readForm(){
+  return {
+    name: document.getElementById("fName").value.trim(),
+    specialty: document.getElementById("fSpecialty").value.trim(),
+    phone: document.getElementById("fPhone").value.trim(),
+    email: document.getElementById("fEmail").value.trim(),
+    location: document.getElementById("fLocation").value.trim(),
+    insurance: document.getElementById("fInsurance").value.trim(),
+    languages: document.getElementById("fLanguages").value.trim(),
+    gender: document.getElementById("fGender").value,
+    availability: document.getElementById("fAvailability").value.trim(),
+    website: document.getElementById("fWebsite").value.trim(),
+    notes: document.getElementById("fNotes").value.trim(),
+  };
+}
+
+// ============== ADD ==============
+document.getElementById("fabAdd").addEventListener("click",()=>{
+  clearForm();
+  openModal("Add Provider");
+});
+
+// ============== EDIT ==============
+function openEdit(id){
+  const provider = getAll().find(p=>p.id===id);
+  if(!provider) return;
+  editingId = id;
+  fillForm(provider);
+  openModal("Edit Provider");
+}
+
+// ============== SAVE ==============
+document.getElementById("modalSave").addEventListener("click",()=>{
+  const data = readForm();
+  if(!data.name || !data.specialty){
+    alert("Name and Specialty are required.");
+    return;
+  }
+
+  if(editingId !== null){
+    // Save edit
+    const edits = loadEdits();
+    edits[editingId] = data;
+    saveEdits(edits);
+  } else {
+    // Add new
+    const extra = loadExtra();
+    data.id = nextId();
+    extra.push(data);
+    saveExtra(extra);
+  }
+
+  closeModal();
+  render();
+});
+
+// ============== CLOSE HANDLERS ==============
+document.getElementById("modalClose").addEventListener("click",closeModal);
+document.getElementById("modalOverlay").addEventListener("click",closeModal);
+
+// ============== CALL ==============
+function doCall(id){
+  const p = getAll().find(x=>x.id===id);
+  if(p && p.phone) window.location.href = "tel:" + encodeURIComponent(p.phone);
+}
+
+// ============== WHATSAPP ==============
+function doWA(id){
+  const p = getAll().find(x=>x.id===id);
+  if(p && p.phone){
+    const num = p.phone.replace(/[^0-9]/g,"");
+    window.open("https://wa.me/" + num,"_blank");
+  }
+}
+
+// ============== SHARE ==============
+function openShare(id){
+  sharingProvider = getAll().find(x=>x.id===id);
+  if(!sharingProvider) return;
+  document.getElementById("shareModal").classList.add("open");
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function closeShare(){
+  document.getElementById("shareModal").classList.remove("open");
+  document.getElementById("modalOverlay").classList.remove("open");
+  sharingProvider = null;
+}
+
+function formatShareText(p){
+  let lines = [`*${p.name}*`,p.specialty];
+  if(p.phone) lines.push(`📞 ${p.phone}`);
+  if(p.location) lines.push(`📍 ${p.location}`);
+  if(p.insurance) lines.push(`🏥 ${p.insurance}`);
+  if(p.languages) lines.push(`🗣 ${p.languages}`);
+  if(p.availability) lines.push(`🕐 ${p.availability}`);
+  if(p.email) lines.push(`✉️ ${p.email}`);
+  if(p.website) lines.push(`🌐 ${p.website}`);
+  if(p.notes) lines.push(`\n📝 ${p.notes}`);
+  lines.push("\n— Shared via RHL Directory");
+  return lines.join("\n");
+}
+
+document.getElementById("shareWA").addEventListener("click",()=>{
+  if(!sharingProvider) return;
+  const text = encodeURIComponent(formatShareText(sharingProvider));
+  window.open("https://wa.me/?text=" + text,"_blank");
+  closeShare();
+});
+
+document.getElementById("shareNative").addEventListener("click",async()=>{
+  if(!sharingProvider) return;
+  const text = formatShareText(sharingProvider);
+  if(navigator.share){
+    try{ await navigator.share({title:sharingProvider.name,text:text}); }catch(e){}
+  } else {
+    // Fallback: copy to clipboard
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("Copied to clipboard!");
+    }catch(e){
+      alert("Share not supported on this device.");
+    }
+  }
+  closeShare();
+});
+
+// Close share on overlay click (when share is open)
+document.getElementById("modalOverlay").addEventListener("click",()=>{
+  if(document.getElementById("shareModal").classList.contains("open")){
+    closeShare();
+  }
+});
+
+// ============== INIT ==============
+renderChips();
+render();
+</script>
+</body>
+</html>
