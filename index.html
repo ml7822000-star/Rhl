@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>RHL Directory</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f5;--card:#fff;--pri:#2563eb;--pri-dk:#1d4ed8;
+  --txt:#1e293b;--txt2:#64748b;--brd:#e2e8f0;--chip:#e0e7ff;
+  --chip-act:#2563eb;--chip-txt:#3730a3;--gold:#f59e0b;
+  --green:#22c55e;--red:#ef4444;--triage:#fbbf24;
+  --radius:12px;--nav-h:64px;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--txt);line-height:1.5;
+  padding-bottom:calc(var(--nav-h) + 16px);overflow-x:hidden}
+
+/* ===== HEADER ===== */
+.hdr{position:sticky;top:0;z-index:50;background:#fff;
+  border-bottom:1px solid var(--brd);padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between}
+.hdr h1{font-size:1.15rem;font-weight:700;color:var(--pri)}
+.hdr .sub{font-size:.7rem;color:var(--txt2)}
+.hdr-right{display:flex;gap:8px;align-items:center}
+.hdr-btn{background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px}
+.triage-badge{position:relative}
+.triage-badge .dot{position:absolute;top:-2px;right:-2px;width:16px;height:16px;
+  background:var(--red);color:#fff;border-radius:50%;font-size:.6rem;
+  display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* ===== VIEWS (tab content) ===== */
+.view{display:none;padding:0}
+.view.active{display:block}
+
+/* ===== BOTTOM NAV ===== */
+.nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);
+  background:#fff;border-top:1px solid var(--brd);display:flex;z-index:90;
+  padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;border:none;background:none;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;font-size:.65rem;
+  color:var(--txt2);cursor:pointer;transition:.15s;padding:4px 0}
+.nav button.active{color:var(--pri);font-weight:600}
+.nav button .ico{font-size:1.4rem}
+
+/* ===== SEARCH ===== */
+.search-wrap{padding:10px 16px 0}
+.search-wrap input{width:100%;padding:10px 14px;border:1px solid var(--brd);
+  border-radius:10px;font-size:.93rem;outline:none;background:#fff}
+.search-wrap input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+
+/* ===== CHIPS ===== */
+.chips{display:flex;gap:7px;padding:10px 16px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 13px;border-radius:20px;font-size:.78rem;
+  font-weight:500;background:var(--chip);color:var(--chip-txt);
+  border:none;cursor:pointer;transition:.15s}
+.chip.active{background:var(--chip-act);color:#fff}
+
+/* ===== STATS ===== */
+.stats{padding:4px 16px 6px;font-size:.73rem;color:var(--txt2);
+  display:flex;justify-content:space-between;align-items:center}
+.export-status{font-size:.65rem;color:var(--gold);font-weight:500}
+
+/* ===== CARDS ===== */
+.cards{padding:0 16px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border-radius:var(--radius);padding:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative}
+.card .badge{position:absolute;top:10px;right:10px;font-size:.65rem;
+  background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:10px;font-weight:600}
+.card .name{font-size:.95rem;font-weight:700;margin-bottom:1px;padding-right:60px}
+.card .title-tag{font-size:.7rem;color:#fff;background:var(--pri);
+  padding:1px 7px;border-radius:8px;display:inline-block;margin-bottom:3px}
+.card .specialty{font-size:.82rem;color:var(--pri);font-weight:500}
+.card .detail{font-size:.77rem;color:var(--txt2);margin-top:2px}
+.card .notes-box{margin-top:7px;padding:7px 10px;border-left:3px solid var(--gold);
+  background:#fffbeb;border-radius:0 8px 8px 0;font-size:.77rem;color:#78350f}
+.card .actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.card .actions button{flex:1;min-width:0;padding:7px 2px;border:none;border-radius:8px;
+  font-size:.73rem;font-weight:600;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:3px;transition:.15s}
+.btn-call{background:#dcfce7;color:#15803d}
+.btn-wa{background:#d1fae5;color:#047857}
+.btn-edit{background:#e0e7ff;color:#3730a3}
+.btn-share{background:#f1f5f9;color:#475569}
+.card .actions button:active{transform:scale(.95)}
+
+/* ===== FULL-SCREEN MODAL ===== */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.4);z-index:100}
+.modal-overlay.open{display:block}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;
+  background:#fff;z-index:101;display:none;flex-direction:column}
+.modal.open{display:flex}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--brd);flex-shrink:0;background:#fff}
+.modal-hdr h2{font-size:1.05rem;font-weight:700}
+.modal-close{background:none;border:none;font-size:1.5rem;color:var(--txt2);
+  cursor:pointer;padding:4px 8px;line-height:1}
+.modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+.modal-body label{display:block;font-size:.78rem;font-weight:600;
+  color:var(--txt2);margin-bottom:3px;margin-top:12px}
+.modal-body label:first-child{margin-top:0}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;
+  padding:9px 11px;border:1px solid var(--brd);border-radius:8px;
+  font-size:.93rem;outline:none;background:#fff;font-family:inherit}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{
+  border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.modal-body textarea{min-height:70px;resize:vertical}
+.modal-foot{padding:10px 16px;border-top:1px solid var(--brd);flex-shrink:0;background:#fff}
+.modal-foot button{width:100%;padding:11px;border:none;border-radius:10px;
+  background:var(--pri);color:#fff;font-size:.95rem;font-weight:600;cursor:pointer}
+.modal-foot button:active{background:var(--pri-dk)}
+
+/* ===== IMPORT VIEW ===== */
+.import-section{margin:16px;background:#fff;border-radius:var(--radius);
+  padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.import-section h3{font-size:.9rem;font-weight:700;margin-bottom:8px;
+  display:flex;align-items:center;gap:6px}
+.import-section p{font-size:.78rem;color:var(--txt2);margin-bottom:10px}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--brd);border-radius:var(--radius);
+  padding:30px 16px;text-align:center;cursor:pointer;transition:.2s;
+  background:#fafbfc}
+.drop-zone.drag{border-color:var(--pri);background:#eff6ff}
+.drop-zone .dz-icon{font-size:2.5rem;margin-bottom:6px}
+.drop-zone .dz-text{font-size:.85rem;color:var(--txt2)}
+.drop-zone input{display:none}
+
+/* Text paste area */
+.paste-area{width:100%;min-height:100px;padding:10px;border:1px solid var(--brd);
+  border-radius:8px;font-size:.9rem;font-family:inherit;resize:vertical;outline:none}
+.paste-area:focus{border-color:var(--pri)}
+
+/* Voice */
+.voice-btn{display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:14px;border:none;border-radius:10px;font-size:.9rem;
+  font-weight:600;cursor:pointer;transition:.2s}
+.voice-btn.idle{background:#fee2e2;color:#991b1b}
+.voice-btn.recording{background:#ef4444;color:#fff;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* Action button */
+.action-btn{width:100%;padding:11px;border:none;border-radius:10px;
+  background:var(--pri);color:#fff;font-size:.9rem;font-weight:600;
+  cursor:pointer;margin-top:10px}
+.action-btn:disabled{opacity:.5;cursor:not-allowed}
+.action-btn.secondary{background:#f1f5f9;color:var(--txt)}
+
+/* Excel upload */
+.file-upload-btn{display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:12px;border:2px dashed var(--brd);border-radius:10px;
+  font-size:.85rem;color:var(--txt2);cursor:pointer;background:#fafbfc}
+.file-upload-btn input{display:none}
+
+/* ===== TRIAGE VIEW ===== */
+.triage-card{background:#fff;border-radius:var(--radius);padding:14px;margin:0 16px 10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid var(--triage)}
+.triage-card .source{font-size:.7rem;color:var(--txt2);margin-bottom:6px;
+  background:#f1f5f9;display:inline-block;padding:2px 8px;border-radius:6px}
+.triage-fields{display:grid;gap:6px;margin:8px 0}
+.triage-field{display:flex;gap:6px;align-items:center}
+.triage-field .lbl{font-size:.7rem;font-weight:600;color:var(--txt2);
+  min-width:70px;flex-shrink:0}
+.triage-field input{flex:1;padding:6px 8px;border:1px solid var(--brd);
+  border-radius:6px;font-size:.82rem;outline:none}
+.triage-field input:focus{border-color:var(--pri)}
+.triage-actions{display:flex;gap:8px;margin-top:10px}
+.triage-actions button{flex:1;padding:9px;border:none;border-radius:8px;
+  font-size:.82rem;font-weight:600;cursor:pointer}
+.triage-approve{background:#dcfce7;color:#15803d}
+.triage-discard{background:#fee2e2;color:#991b1b}
+.triage-empty{text-align:center;padding:60px 20px;color:var(--txt2)}
+.triage-empty .icon{font-size:3rem;margin-bottom:10px}
+
+/* ===== SETTINGS VIEW ===== */
+.settings-section{margin:16px;background:#fff;border-radius:var(--radius);
+  padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.settings-section h3{font-size:.9rem;font-weight:700;margin-bottom:8px}
+.settings-section label{display:block;font-size:.78rem;font-weight:600;
+  color:var(--txt2);margin-bottom:4px;margin-top:10px}
+.settings-section label:first-of-type{margin-top:0}
+.settings-section input{width:100%;padding:9px 11px;border:1px solid var(--brd);
+  border-radius:8px;font-size:.9rem;outline:none}
+.settings-section input:focus{border-color:var(--pri)}
+.settings-note{font-size:.72rem;color:var(--txt2);margin-top:4px}
+
+/* ===== SHARE SHEET ===== */
+.share-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;
+  border-radius:16px 16px 0 0;padding:18px 16px;z-index:102;display:none;
+  box-shadow:0 -4px 20px rgba(0,0,0,.1)}
+.share-sheet.open{display:block}
+.share-sheet h3{font-size:.95rem;margin-bottom:12px}
+.share-opts{display:flex;gap:10px}
+.share-opts button{flex:1;padding:12px;border:none;border-radius:10px;
+  font-size:.85rem;font-weight:600;cursor:pointer}
+.s-wa{background:#25d366;color:#fff}
+.s-native{background:#f1f5f9;color:var(--txt)}
+
+/* ===== EMPTY STATE ===== */
+.empty{text-align:center;padding:50px 20px;color:var(--txt2)}
+.empty .icon{font-size:3rem;margin-bottom:10px}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:#1e293b;color:#fff;padding:10px 20px;border-radius:10px;
+  font-size:.82rem;z-index:200;display:none;white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{display:block;animation:fadeup .3s ease}
+@keyframes fadeup{from{opacity:0;transform:translateX(-50%) translateY(10px)}
+  to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ===== RESPONSIVE ===== */
+@media(min-width:500px){
+  .cards,.triage-card,.import-section,.settings-section{max-width:500px;margin-left:auto;margin-right:auto}
+  .search-wrap,.chips,.stats{max-width:500px;margin-left:auto;margin-right:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <h1>RHL Directory</h1>
+    <div class="sub">Mental Health Provider Referrals</div>
+  </div>
+  <div class="hdr-right">
+    <button class="hdr-btn triage-badge" onclick="switchTab('triage')" title="Triage">
+      <span>📋</span><span class="dot" id="triageDot" style="display:none">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- ==================== DIRECTORY VIEW ==================== -->
+<div class="view active" id="v-dir">
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Search name, specialty, location, notes...">
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="stats" id="stats">
+    <span id="countText"></span>
+    <span class="export-status" id="exportStatus"></span>
+  </div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<!-- ==================== ADD VIEW ==================== -->
+<div class="view" id="v-add">
+  <div class="import-section">
+    <h3>➕ Add a Provider</h3>
+    <p>Enter the details manually. Name and Specialty are required.</p>
+    <button class="action-btn" onclick="openAddModal()">Open Add Form</button>
+  </div>
+</div>
+
+<!-- ==================== IMPORT VIEW ==================== -->
+<div class="view" id="v-import">
+
+  <!-- Text Paste -->
+  <div class="import-section">
+    <h3>📝 Paste Text</h3>
+    <p>Paste any text with provider info — bio, directory listing, email signature. AI will extract the fields.</p>
+    <textarea class="paste-area" id="pasteText" placeholder="Paste therapist info here..."></textarea>
+    <button class="action-btn" id="btnParseText" onclick="parseText()">Extract Provider Info</button>
+  </div>
+
+  <!-- Excel / CSV -->
+  <div class="import-section">
+    <h3>📊 Excel / CSV Import</h3>
+    <p>Upload a spreadsheet with provider data. Columns are auto-mapped to fields.</p>
+    <label class="file-upload-btn" id="excelLabel">
+      📁 Tap to select Excel or CSV file
+      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleExcel(this)">
+    </label>
+    <div id="excelPreview" style="margin-top:10px;font-size:.8rem;color:var(--txt2)"></div>
+  </div>
+
+  <!-- Drop Zone (images/PDF) -->
+  <div class="import-section">
+    <h3>📸 Drop Zone — Flyers, Cards, PDFs</h3>
+    <p>Upload a photo of a flyer, business card, or PDF. AI will read it and extract provider info.</p>
+    <div class="drop-zone" id="dropZone">
+      <div class="dz-icon">📎</div>
+      <div class="dz-text">Tap to upload or drag files here<br><small>JPG, PNG, PDF</small></div>
+      <input type="file" id="dropFile" accept="image/*,.pdf" multiple>
+    </div>
+    <div id="dropPreview" style="margin-top:10px"></div>
+  </div>
+
+  <!-- Voice Note -->
+  <div class="import-section">
+    <h3>🎙️ Voice Note</h3>
+    <p>Tap the mic and describe a provider. AI will transcribe and extract the info.</p>
+    <button class="voice-btn idle" id="voiceBtn" onclick="toggleVoice()">
+      🎙️ Tap to Record
+    </button>
+    <div id="voiceTranscript" style="margin-top:8px;font-size:.82rem;color:var(--txt2);display:none">
+      <strong>Transcript:</strong> <span id="voiceText"></span>
+    </div>
+    <button class="action-btn" id="btnParseVoice" style="display:none" onclick="parseVoiceText()">Extract from Voice</button>
+  </div>
+</div>
+
+<!-- ==================== TRIAGE VIEW ==================== -->
+<div class="view" id="v-triage">
+  <div style="padding:12px 16px 4px"><h2 style="font-size:1rem">Triage Queue</h2>
+    <p style="font-size:.78rem;color:var(--txt2)">Review AI-extracted data. Correct any mistakes, then approve or discard.</p>
+  </div>
+  <div id="triageList"></div>
+</div>
+
+<!-- ==================== SETTINGS VIEW ==================== -->
+<div class="view" id="v-settings">
+  <div class="settings-section">
+    <h3>🔑 AI Settings</h3>
+    <label>Claude API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." onchange="saveSetting('apiKey',this.value)">
+    <p class="settings-note">Needed for text/voice/image extraction. Get one at console.anthropic.com. Your key stays on your device only.</p>
+  </div>
+  <div class="settings-section">
+    <h3>📧 Export to Email</h3>
+    <label>Export Email Address</label>
+    <input type="email" id="exportEmail" placeholder="you@email.com" onchange="saveSetting('exportEmail',this.value)">
+    <p class="settings-note">When you tap Export, your full provider list is sent to this email.</p>
+    <button class="action-btn" onclick="exportToEmail()" style="margin-top:12px">📧 Export All Data Now</button>
+    <div id="lastExport" style="margin-top:8px;font-size:.75rem;color:var(--txt2)"></div>
+  </div>
+  <div class="settings-section">
+    <h3>💾 Data</h3>
+    <button class="action-btn" onclick="downloadJSON()">📥 Download as JSON</button>
+    <button class="action-btn secondary" onclick="downloadCSV()" style="margin-top:8px">📥 Download as CSV</button>
+    <p class="settings-note" style="margin-top:8px">Total providers: <strong id="totalCount">0</strong></p>
+  </div>
+  <div class="settings-section">
+    <h3>ℹ️ About</h3>
+    <p style="font-size:.8rem;color:var(--txt2)">RHL Directory v1.0<br>Mental Health Provider Referral Directory<br>Data stored locally on your device.</p>
+  </div>
+</div>
+
+<!-- ==================== ADD/EDIT MODAL (full-screen) ==================== -->
+<div class="modal-overlay" id="modalOverlay"></div>
+<div class="modal" id="modal">
+  <div class="modal-hdr">
+    <h2 id="modalTitle">Add Provider</h2>
+    <button class="modal-close" id="modalClose" onclick="closeModal()">&times;</button>
+  </div>
+  <div class="modal-body">
+    <label for="fName">Name *</label>
+    <input type="text" id="fName" autocomplete="off">
+    <label for="fTitle">Title</label>
+    <select id="fTitle">
+      <option value="">—</option>
+      <option value="Psychologist">Psychologist</option>
+      <option value="Psychiatrist">Psychiatrist</option>
+      <option value="Therapist">Therapist</option>
+      <option value="Counselor">Counselor</option>
+      <option value="Social Worker">Social Worker</option>
+      <option value="Other">Other</option>
+    </select>
+    <label for="fSpecialty">Specialty *</label>
+    <input type="text" id="fSpecialty" placeholder="e.g. CBT, Anxiety, Trauma" autocomplete="off">
+    <label for="fPhone">Phone</label>
+    <input type="tel" id="fPhone" autocomplete="off">
+    <label for="fEmail">Email</label>
+    <input type="email" id="fEmail" autocomplete="off">
+    <label for="fLocation">Location</label>
+    <input type="text" id="fLocation" autocomplete="off">
+    <label for="fInsurance">Insurance</label>
+    <input type="text" id="fInsurance" autocomplete="off">
+    <label for="fLanguages">Languages</label>
+    <input type="text" id="fLanguages" placeholder="e.g. English, Arabic" autocomplete="off">
+    <label for="fGender">Gender</label>
+    <select id="fGender">
+      <option value="">—</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+    <label for="fAvailability">Availability</label>
+    <input type="text" id="fAvailability" placeholder="e.g. Weekdays, Evenings" autocomplete="off">
+    <label for="fWebsite">Website</label>
+    <input type="url" id="fWebsite" autocomplete="off">
+    <label for="fNotes">Notes</label>
+    <textarea id="fNotes" placeholder="Additional notes..."></textarea>
+  </div>
+  <div class="modal-foot">
+    <button id="modalSave" onclick="saveProvider()">Save Provider</button>
+  </div>
+</div>
+
+<!-- SHARE SHEET -->
+<div class="share-sheet" id="shareSheet">
+  <h3>Share Provider</h3>
+  <div class="share-opts">
+    <button class="s-wa" onclick="shareViaWA()">💬 WhatsApp</button>
+    <button class="s-native" onclick="shareViaNative()">📤 Share...</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="active" onclick="switchTab('dir')" id="nav-dir">
+    <span class="ico">🏠</span>Directory
+  </button>
+  <button onclick="switchTab('add')" id="nav-add">
+    <span class="ico">➕</span>Add
+  </button>
+  <button onclick="switchTab('import')" id="nav-import">
+    <span class="ico">📥</span>Import
+  </button>
+  <button onclick="switchTab('triage')" id="nav-triage">
+    <span class="ico">📋</span>Triage
+  </button>
+  <button onclick="switchTab('settings')" id="nav-settings">
+    <span class="ico">⚙️</span>Settings
+  </button>
+</nav>
+
+<!-- SheetJS for Excel parsing -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+<script>
+// ===================== SEED DATA =====================
+const SEED=[
+{id:1,name:"Dr. Sarah Ahmad",title:"Psychologist",specialty:"Anxiety, Depression, CBT",phone:"+962791000001",email:"sarah.ahmad@clinic.jo",location:"Amman, Jordan",insurance:"National Insurance",languages:"Arabic, English",gender:"Female",availability:"Sun-Thu 9-5",website:"",notes:"Specializes in young adults"},
+{id:2,name:"Dr. Omar Khalil",title:"Psychiatrist",specialty:"Trauma, EMDR, PTSD",phone:"+962791000002",email:"omar.k@mentalhealth.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic, English",gender:"Male",availability:"Mon-Fri 10-6",website:"",notes:""},
+{id:3,name:"Dr. Layla Mansour",title:"Psychologist",specialty:"OCD, Anxiety, Exposure Therapy",phone:"+962791000003",email:"layla.m@therapy.jo",location:"Irbid, Jordan",insurance:"Self-pay",languages:"Arabic",gender:"Female",availability:"Sun-Wed 9-3",website:"",notes:"Accepts online sessions"},
+{id:4,name:"Dr. Fadi Nasser",title:"Therapist",specialty:"Couples, Family Therapy",phone:"+962791000004",email:"fadi.n@familytherapy.jo",location:"Amman, Jordan",insurance:"National Insurance, Private",languages:"Arabic, English, French",gender:"Male",availability:"Mon-Sat 11-7",website:"",notes:"15+ years experience with couples"},
+{id:5,name:"Dr. Rania Haddad",title:"Psychiatrist",specialty:"Depression, Mood Disorders",phone:"+962791000005",email:"rania.h@wellbeing.jo",location:"Zarqa, Jordan",insurance:"Self-pay",languages:"Arabic, English",gender:"Female",availability:"Sun-Thu 8-4",website:"",notes:""},
+{id:6,name:"Dr. Khaled Yousef",title:"Counselor",specialty:"Addiction, Substance Abuse",phone:"+962791000006",email:"khaled.y@recovery.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic",gender:"Male",availability:"Daily 9-9",website:"",notes:"Runs group therapy sessions on Saturdays"},
+{id:7,name:"Dr. Nour Sabbagh",title:"Psychologist",specialty:"Child Psychology, ADHD",phone:"+962791000007",email:"nour.s@childpsych.jo",location:"Amman, Jordan",insurance:"Private",languages:"Arabic, English",gender:"Female",availability:"Sun-Thu 10-5",website:"",notes:"Ages 4-16"},
+{id:8,name:"Dr. Mazen Tariq",title:"Psychologist",specialty:"Anxiety, Panic Disorders, CBT",phone:"+962791000008",email:"mazen.t@cbt.jo",location:"Aqaba, Jordan",insurance:"Self-pay, National Insurance",languages:"Arabic, English",gender:"Male",availability:"Mon-Fri 9-5",website:"",notes:""},
+{id:9,name:"Dr. Hana Qasem",title:"Therapist",specialty:"Trauma, Grief Counseling",phone:"+962791000009",email:"hana.q@grief.jo",location:"Amman, Jordan",insurance:"National Insurance",languages:"Arabic, English",gender:"Female",availability:"Sun-Thu 8-3",website:"",notes:"Also does workshops for families"},
+{id:10,name:"Dr. Basem Awad",title:"Counselor",specialty:"Couples, Relationship Issues",phone:"+962791000010",email:"basem.a@relate.jo",location:"Madaba, Jordan",insurance:"Self-pay",languages:"Arabic",gender:"Male",availability:"Weekdays 10-6",website:"",notes:""},
+{id:11,name:"Dr. Dina Farah",title:"Psychologist",specialty:"OCD, Anxiety, ACT",phone:"+962791000011",email:"dina.f@ocdclinic.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic, English",gender:"Female",availability:"Sun-Wed 9-5",website:"",notes:"Acceptance and Commitment Therapy specialist"},
+{id:12,name:"Dr. Sami Halabi",title:"Psychiatrist",specialty:"Depression, Bipolar Disorder",phone:"+962791000012",email:"sami.h@mood.jo",location:"Amman, Jordan",insurance:"Private, National Insurance",languages:"Arabic, English, German",gender:"Male",availability:"Mon-Fri 8-4",website:"",notes:"Studied in Berlin"},
+{id:13,name:"Dr. Lina Khoury",title:"Therapist",specialty:"Eating Disorders, Body Image",phone:"+962791000013",email:"lina.k@eating.jo",location:"Amman, Jordan",insurance:"Self-pay",languages:"Arabic, English",gender:"Female",availability:"Sun-Thu 10-6",website:"",notes:"Works with adolescents and adults"},
+{id:14,name:"Dr. Tareq Masri",title:"Psychologist",specialty:"Anxiety, Social Phobia",phone:"+962791000014",email:"tareq.m@social.jo",location:"Salt, Jordan",insurance:"National Insurance",languages:"Arabic",gender:"Male",availability:"Sun-Thu 9-3",website:"",notes:""},
+{id:15,name:"Dr. Yasmin Issa",title:"Psychologist",specialty:"Trauma, Women's Mental Health",phone:"+962791000015",email:"yasmin.i@women.jo",location:"Amman, Jordan",insurance:"Various",languages:"Arabic, English",gender:"Female",availability:"Mon-Sat 9-5",website:"",notes:"Focuses on postpartum and perinatal mental health"},
+];
+
+const SPECIALTIES=["Anxiety","Trauma","OCD","Couples","Depression","ADHD","Addiction","Eating Disorders","Child","Grief"];
+const FIELDS=["name","title","specialty","phone","email","location","insurance","languages","gender","availability","website","notes"];
+const FIELD_IDS={name:"fName",title:"fTitle",specialty:"fSpecialty",phone:"fPhone",email:"fEmail",location:"fLocation",insurance:"fInsurance",languages:"fLanguages",gender:"fGender",availability:"fAvailability",website:"fWebsite",notes:"fNotes"};
+
+// ===================== STATE =====================
+let activeChip=null, editingId=null, sharingProvider=null;
+let isRecording=false, recognition=null;
+
+// ===================== LOCALSTORAGE =====================
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function loadExtra(){return load("rhl_extra",[])}
+function saveExtra(a){save("rhl_extra",a)}
+function loadEdits(){return load("rhl_edits",{})}
+function saveEdits(o){save("rhl_edits",o)}
+function loadTriage(){return load("rhl_triage",[])}
+function saveTriage(a){save("rhl_triage",a)}
+function loadSettings(){return load("rhl_settings",{})}
+function saveSetting(k,v){const s=loadSettings();s[k]=v;save("rhl_settings",s)}
+
+// ===================== MERGE =====================
+function getAll(){
+  const extra=loadExtra(), edits=loadEdits();
+  return [...SEED,...extra].map(p=>{
+    const e=edits[p.id];
+    return e?{...p,...e,_edited:true}:p;
+  });
+}
+function nextId(){
+  const all=getAll();
+  return all.length?Math.max(...all.map(p=>p.id))+1:1;
+}
+
+// ===================== HTML ESCAPE =====================
+function esc(s){if(!s)return"";const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+
+// ===================== TOAST =====================
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.className="toast show";
+  setTimeout(()=>t.className="toast",2500);
+}
+
+// ===================== TAB SWITCHING =====================
+function switchTab(tab){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+  document.getElementById("v-"+tab).classList.add("active");
+  document.getElementById("nav-"+tab).classList.add("active");
+  if(tab==="triage") renderTriage();
+  if(tab==="settings") loadSettingsUI();
+  if(tab==="dir") render();
+}
+
+// ===================== RENDER DIRECTORY =====================
+function render(){
+  const q=document.getElementById("searchInput").value.trim().toLowerCase();
+  let providers=getAll();
+  if(q){
+    const terms=q.split(/\s+/);
+    providers=providers.filter(p=>{
+      const blob=[p.name,p.specialty,p.location,p.notes,p.phone,p.title].join(" ").toLowerCase();
+      return terms.some(t=>blob.includes(t));
+    });
+  }
+  if(activeChip){
+    providers=providers.filter(p=>
+      (p.specialty||"").toLowerCase().includes(activeChip.toLowerCase())||
+      (p.notes||"").toLowerCase().includes(activeChip.toLowerCase())
+    );
+  }
+  document.getElementById("countText").textContent=providers.length+" provider"+(providers.length!==1?"s":"");
+  const lastExp=loadSettings().lastExport;
+  document.getElementById("exportStatus").textContent=lastExp?"Last export: "+lastExp:"";
+  document.getElementById("totalCount").textContent=getAll().length;
+
+  const c=document.getElementById("cards");
+  if(!providers.length){c.innerHTML='<div class="empty"><div class="icon">🔍</div>No providers found</div>';return;}
+
+  c.innerHTML=providers.map(p=>{
+    const notes=p.notes?`<div class="notes-box">${esc(p.notes)}</div>`:"";
+    const badge=p._edited?`<span class="badge">✎ Edited</span>`:"";
+    const titleTag=p.title?`<span class="title-tag">${esc(p.title)}</span>`:"";
+    const details=[
+      p.location?"📍 "+esc(p.location):"",
+      p.insurance?"🏥 "+esc(p.insurance):"",
+      p.languages?"🗣 "+esc(p.languages):"",
+      p.availability?"🕐 "+esc(p.availability):"",
+    ].filter(Boolean).map(d=>`<div class="detail">${d}</div>`).join("");
+    return `<div class="card">
+      ${badge}
+      <div class="name">${esc(p.name)}</div>
+      ${titleTag}
+      <div class="specialty">${esc(p.specialty)}</div>
+      ${details}${notes}
+      <div class="actions">
+        ${p.phone?`<button class="btn-call" onclick="doCall(${p.id})">📞 Call</button>`:""}
+        ${p.phone?`<button class="btn-wa" onclick="doWA(${p.id})">💬 WA</button>`:""}
+        <button class="btn-edit" onclick="openEdit(${p.id})">✏️ Edit</button>
+        <button class="btn-share" onclick="openShare(${p.id})">📤 Share</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ===================== CHIPS =====================
+function renderChips(){
+  document.getElementById("chips").innerHTML=SPECIALTIES.map(s=>
+    `<button class="chip${activeChip===s?" active":""}" data-s="${s}">${s}</button>`
+  ).join("");
+}
+document.getElementById("chips").addEventListener("click",e=>{
+  const ch=e.target.closest(".chip");
+  if(!ch)return;
+  activeChip=activeChip===ch.dataset.s?null:ch.dataset.s;
+  renderChips();render();
+});
+document.getElementById("searchInput").addEventListener("input",render);
+
+// ===================== MODAL =====================
+function openModal(title){
+  document.getElementById("modalTitle").textContent=title||"Add Provider";
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("modalOverlay").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+function closeModal(){
+  document.getElementById("modal").classList.remove("open");
+  document.getElementById("modalOverlay").classList.remove("open");
+  document.body.style.overflow="";
+  clearForm();editingId=null;
+}
+function clearForm(){FIELDS.forEach(f=>{document.getElementById(FIELD_IDS[f]).value="";})}
+function fillForm(p){FIELDS.forEach(f=>{document.getElementById(FIELD_IDS[f]).value=p[f]||"";})}
+function readForm(){
+  const d={};
+  FIELDS.forEach(f=>{d[f]=document.getElementById(FIELD_IDS[f]).value.trim();});
+  return d;
+}
+function openAddModal(){clearForm();editingId=null;openModal("Add Provider");}
+function openEdit(id){
+  const p=getAll().find(x=>x.id===id);
+  if(!p)return;
+  editingId=id;fillForm(p);openModal("Edit Provider");
+}
+function saveProvider(){
+  const d=readForm();
+  if(!d.name||!d.specialty){toast("Name and Specialty are required.");return;}
+  if(editingId!==null){
+    const edits=loadEdits();edits[editingId]=d;saveEdits(edits);
+  }else{
+    const extra=loadExtra();d.id=nextId();extra.push(d);saveExtra(extra);
+  }
+  closeModal();render();toast(editingId!==null?"Provider updated!":"Provider added!");
+}
+document.getElementById("modalOverlay").addEventListener("click",()=>{
+  if(document.getElementById("shareSheet").classList.contains("open")){closeShare();}
+  else{closeModal();}
+});
+
+// ===================== CALL / WA =====================
+function doCall(id){const p=getAll().find(x=>x.id===id);if(p&&p.phone)window.location.href="tel:"+encodeURIComponent(p.phone);}
+function doWA(id){const p=getAll().find(x=>x.id===id);if(p&&p.phone){window.open("https://wa.me/"+p.phone.replace(/[^0-9]/g,""),"_blank");}}
+
+// ===================== SHARE =====================
+function openShare(id){
+  sharingProvider=getAll().find(x=>x.id===id);
+  if(!sharingProvider)return;
+  document.getElementById("shareSheet").classList.add("open");
+  document.getElementById("modalOverlay").classList.add("open");
+}
+function closeShare(){
+  document.getElementById("shareSheet").classList.remove("open");
+  document.getElementById("modalOverlay").classList.remove("open");
+  sharingProvider=null;
+}
+function fmtShare(p){
+  let l=[`*${p.name}*`];
+  if(p.title)l.push(p.title);
+  l.push(p.specialty);
+  if(p.phone)l.push("📞 "+p.phone);
+  if(p.location)l.push("📍 "+p.location);
+  if(p.insurance)l.push("🏥 "+p.insurance);
+  if(p.languages)l.push("🗣 "+p.languages);
+  if(p.availability)l.push("🕐 "+p.availability);
+  if(p.email)l.push("✉️ "+p.email);
+  if(p.website)l.push("🌐 "+p.website);
+  if(p.notes)l.push("\n📝 "+p.notes);
+  l.push("\n— Shared via RHL Directory");
+  return l.join("\n");
+}
+function shareViaWA(){
+  if(!sharingProvider)return;
+  window.open("https://wa.me/?text="+encodeURIComponent(fmtShare(sharingProvider)),"_blank");
+  closeShare();
+}
+async function shareViaNative(){
+  if(!sharingProvider)return;
+  const txt=fmtShare(sharingProvider);
+  if(navigator.share){try{await navigator.share({title:sharingProvider.name,text:txt});}catch(e){}}
+  else{try{await navigator.clipboard.writeText(txt);toast("Copied to clipboard!");}catch(e){toast("Share not supported");}}
+  closeShare();
+}
+
+// ===================== EXCEL IMPORT =====================
+function handleExcel(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      if(!rows.length){toast("Empty file");return;}
+      const mapped=rows.map(r=>mapRow(r)).filter(m=>m.name);
+      if(!mapped.length){toast("No valid rows found");return;}
+      const triage=loadTriage();
+      mapped.forEach(m=>{m._source="Excel: "+file.name;triage.push(m);});
+      saveTriage(triage);
+      updateTriageBadge();
+      document.getElementById("excelPreview").textContent=mapped.length+" providers sent to Triage for review.";
+      toast(mapped.length+" providers imported to Triage!");
+      input.value="";
+    }catch(err){toast("Error reading file: "+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function mapRow(r){
+  const out={};
+  const keys=Object.keys(r);
+  const find=(targets)=>keys.find(k=>targets.some(t=>k.toLowerCase().includes(t)))||null;
+  out.name=r[find(["name","provider","doctor","therapist"])]||"";
+  out.title=r[find(["title","type","role"])]||"";
+  out.specialty=r[find(["specialty","specialization","spec","focus"])]||"";
+  out.phone=r[find(["phone","tel","mobile","cell"])]||"";
+  out.email=r[find(["email","mail"])]||"";
+  out.location=r[find(["location","address","city","area"])]||"";
+  out.insurance=r[find(["insurance","ins"])]||"";
+  out.languages=r[find(["language","lang"])]||"";
+  out.gender=r[find(["gender","sex"])]||"";
+  out.availability=r[find(["availability","hours","schedule","avail"])]||"";
+  out.website=r[find(["website","web","url","site"])]||"";
+  out.notes=r[find(["notes","note","comment","remarks"])]||"";
+  return out;
+}
+
+// ===================== TEXT PASTE → AI EXTRACTION =====================
+async function parseText(){
+  const text=document.getElementById("pasteText").value.trim();
+  if(!text){toast("Paste some text first");return;}
+  const key=loadSettings().apiKey;
+  if(!key){
+    const extracted=basicExtract(text);
+    if(extracted.name){
+      const triage=loadTriage();
+      extracted._source="Text paste";
+      triage.push(extracted);
+      saveTriage(triage);
+      updateTriageBadge();
+      document.getElementById("pasteText").value="";
+      toast("Extracted (basic) → sent to Triage");
+    }else{toast("Could not extract. Add API key in Settings for better results.");}
+    return;
+  }
+  document.getElementById("btnParseText").disabled=true;
+  document.getElementById("btnParseText").textContent="Extracting...";
+  try{
+    const results=await callClaude(key,`Extract mental health provider information from this text. Return a JSON array of objects. Each object should have these fields: name, title (Psychologist/Psychiatrist/Therapist/Counselor/Social Worker), specialty, phone, email, location, insurance, languages, gender, availability, website, notes. If multiple providers are found, return all. If a field is not found, use empty string. Text:\n\n${text}`);
+    const parsed=JSON.parse(results);
+    const arr=Array.isArray(parsed)?parsed:[parsed];
+    const triage=loadTriage();
+    arr.forEach(p=>{p._source="Text paste (AI)";triage.push(p);});
+    saveTriage(triage);
+    updateTriageBadge();
+    document.getElementById("pasteText").value="";
+    toast(arr.length+" provider(s) → Triage!");
+  }catch(err){
+    toast("AI error: "+err.message);
+    const extracted=basicExtract(text);
+    if(extracted.name){
+      const triage=loadTriage();extracted._source="Text paste";triage.push(extracted);
+      saveTriage(triage);updateTriageBadge();
+      document.getElementById("pasteText").value="";
+      toast("Fallback extraction → Triage");
+    }
+  }
+  document.getElementById("btnParseText").disabled=false;
+  document.getElementById("btnParseText").textContent="Extract Provider Info";
+}
+
+function basicExtract(text){
+  const out={};
+  const phoneMatch=text.match(/[\+]?[\d\s\-\(\)]{7,15}/);
+  const emailMatch=text.match(/[\w.-]+@[\w.-]+\.\w+/);
+  const lines=text.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  out.name=lines[0]||"";
+  out.phone=phoneMatch?phoneMatch[0].trim():"";
+  out.email=emailMatch?emailMatch[0]:"";
+  out.specialty="";out.title="";out.location="";out.insurance="";
+  out.languages="";out.gender="";out.availability="";out.website="";
+  out.notes=text.substring(0,200);
+  const titleWords=["psychologist","psychiatrist","therapist","counselor","social worker"];
+  const lower=text.toLowerCase();
+  titleWords.forEach(t=>{if(lower.includes(t))out.title=t.charAt(0).toUpperCase()+t.slice(1);});
+  return out;
+}
+
+// ===================== VOICE =====================
+function toggleVoice(){
+  if(!("webkitSpeechRecognition" in window||"SpeechRecognition" in window)){
+    toast("Voice not supported in this browser");return;
+  }
+  const btn=document.getElementById("voiceBtn");
+  if(isRecording){
+    recognition.stop();isRecording=false;
+    btn.className="voice-btn idle";btn.innerHTML="🎙️ Tap to Record";
+    return;
+  }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();
+  recognition.continuous=true;recognition.interimResults=true;recognition.lang="en-US";
+  let finalText="";
+  recognition.onresult=function(e){
+    let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)finalText+=e.results[i][0].transcript+" ";
+      else interim+=e.results[i][0].transcript;
+    }
+    document.getElementById("voiceText").textContent=finalText+interim;
+    document.getElementById("voiceTranscript").style.display="block";
+    document.getElementById("btnParseVoice").style.display="block";
+  };
+  recognition.onerror=function(){isRecording=false;btn.className="voice-btn idle";btn.innerHTML="🎙️ Tap to Record";};
+  recognition.onend=function(){isRecording=false;btn.className="voice-btn idle";btn.innerHTML="🎙️ Tap to Record";};
+  recognition.start();isRecording=true;
+  btn.className="voice-btn recording";btn.innerHTML="🔴 Recording... Tap to Stop";
+}
+
+async function parseVoiceText(){
+  const text=document.getElementById("voiceText").textContent.trim();
+  if(!text){toast("No transcript");return;}
+  document.getElementById("pasteText").value=text;
+  switchTab("import");
+  await parseText();
+}
+
+// ===================== DROP ZONE =====================
+const dz=document.getElementById("dropZone");
+const dzInput=document.getElementById("dropFile");
+dz.addEventListener("click",()=>dzInput.click());
+dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});
+dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
+dz.addEventListener("drop",e=>{e.preventDefault();dz.classList.remove("drag");handleDropFiles(e.dataTransfer.files);});
+dzInput.addEventListener("change",()=>handleDropFiles(dzInput.files));
+
+async function handleDropFiles(files){
+  const key=loadSettings().apiKey;
+  if(!key){toast("Add your Claude API key in Settings to extract from images/PDFs");return;}
+  const prev=document.getElementById("dropPreview");
+  prev.innerHTML="";
+  for(const file of files){
+    const div=document.createElement("div");
+    div.style.cssText="font-size:.82rem;color:var(--txt2);padding:4px 0";
+    div.textContent="Processing: "+file.name+"...";
+    prev.appendChild(div);
+    try{
+      const base64=await fileToBase64(file);
+      const mediaType=file.type||"image/jpeg";
+      const result=await callClaudeVision(key,base64,mediaType,
+        `Extract mental health provider information from this image/document. Return a JSON array of objects with fields: name, title, specialty, phone, email, location, insurance, languages, gender, availability, website, notes. If multiple providers found, return all. Use empty string for missing fields.`);
+      const parsed=JSON.parse(result);
+      const arr=Array.isArray(parsed)?parsed:[parsed];
+      const triage=loadTriage();
+      arr.forEach(p=>{p._source="Drop zone: "+file.name;triage.push(p);});
+      saveTriage(triage);updateTriageBadge();
+      div.textContent="✅ "+file.name+": "+arr.length+" provider(s) → Triage";
+      toast(arr.length+" extracted from "+file.name);
+    }catch(err){
+      div.textContent="❌ "+file.name+": "+err.message;
+    }
+  }
+}
+
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(r.result.split(",")[1]);
+    r.onerror=reject;
+    r.readAsDataURL(file);
+  });
+}
+
+// ===================== CLAUDE API =====================
+async function callClaude(key,prompt){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,
+      messages:[{role:"user",content:prompt}]})
+  });
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const data=await res.json();
+  let text=data.content[0].text;
+  const jsonMatch=text.match(/\[[\s\S]*\]/)||text.match(/\{[\s\S]*\}/);
+  return jsonMatch?jsonMatch[0]:text;
+}
+
+async function callClaudeVision(key,base64,mediaType,prompt){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4096,
+      messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:mediaType,data:base64}},
+        {type:"text",text:prompt}
+      ]}]})
+  });
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const data=await res.json();
+  let text=data.content[0].text;
+  const jsonMatch=text.match(/\[[\s\S]*\]/)||text.match(/\{[\s\S]*\}/);
+  return jsonMatch?jsonMatch[0]:text;
+}
+
+// ===================== TRIAGE =====================
+function renderTriage(){
+  const items=loadTriage();
+  updateTriageBadge();
+  const list=document.getElementById("triageList");
+  if(!items.length){
+    list.innerHTML='<div class="triage-empty"><div class="icon">✅</div>Nothing to review!<br><small>Import data to see items here</small></div>';
+    return;
+  }
+  list.innerHTML=items.map((item,i)=>{
+    const fields=FIELDS.map(f=>
+      `<div class="triage-field"><span class="lbl">${f.charAt(0).toUpperCase()+f.slice(1)}</span><input value="${esc(item[f]||"")}" data-idx="${i}" data-field="${f}"></div>`
+    ).join("");
+    return `<div class="triage-card">
+      <span class="source">${esc(item._source||"Unknown source")}</span>
+      <div class="triage-fields">${fields}</div>
+      <div class="triage-actions">
+        <button class="triage-approve" onclick="approveTriage(${i})">✅ Approve</button>
+        <button class="triage-discard" onclick="discardTriage(${i})">🗑️ Discard</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".triage-field input").forEach(inp=>{
+    inp.addEventListener("change",function(){
+      const items=loadTriage();
+      const idx=parseInt(this.dataset.idx);
+      items[idx][this.dataset.field]=this.value;
+      saveTriage(items);
+    });
+  });
+}
+
+function approveTriage(idx){
+  const items=loadTriage();
+  const item=items[idx];
+  if(!item)return;
+  if(!item.name){toast("Name is required");return;}
+  const extra=loadExtra();
+  const provider={id:nextId()};
+  FIELDS.forEach(f=>{provider[f]=item[f]||"";});
+  extra.push(provider);
+  saveExtra(extra);
+  items.splice(idx,1);
+  saveTriage(items);
+  renderTriage();render();
+  toast("Provider approved!");
+}
+function discardTriage(idx){
+  const items=loadTriage();
+  items.splice(idx,1);
+  saveTriage(items);
+  renderTriage();
+  toast("Discarded");
+}
+function updateTriageBadge(){
+  const n=loadTriage().length;
+  const dot=document.getElementById("triageDot");
+  if(n>0){dot.style.display="flex";dot.textContent=n;}
+  else{dot.style.display="none";}
+}
+
+// ===================== SETTINGS =====================
+function loadSettingsUI(){
+  const s=loadSettings();
+  document.getElementById("apiKey").value=s.apiKey||"";
+  document.getElementById("exportEmail").value=s.exportEmail||"";
+  const le=s.lastExport;
+  document.getElementById("lastExport").textContent=le?"Last export: "+le:"Never exported yet";
+  document.getElementById("totalCount").textContent=getAll().length;
+}
+
+// ===================== EXPORT =====================
+function downloadJSON(){
+  const data=JSON.stringify(getAll(),null,2);
+  downloadFile(data,"rhl-providers.json","application/json");
+  toast("JSON downloaded!");
+}
+function downloadCSV(){
+  const all=getAll();
+  const header=FIELDS.join(",");
+  const rows=all.map(p=>FIELDS.map(f=>'"'+(p[f]||"").replace(/"/g,'""')+'"').join(","));
+  downloadFile(header+"\n"+rows.join("\n"),"rhl-providers.csv","text/csv");
+  toast("CSV downloaded!");
+}
+function downloadFile(content,name,type){
+  const blob=new Blob([content],{type});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=name;a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function exportToEmail(){
+  const email=loadSettings().exportEmail;
+  if(!email){toast("Set an export email first");return;}
+  const all=getAll();
+  const csv=FIELDS.join(",")+"\n"+all.map(p=>FIELDS.map(f=>'"'+(p[f]||"").replace(/"/g,'""')+'"').join(",")).join("\n");
+  const subject=encodeURIComponent("RHL Provider Export - "+new Date().toLocaleDateString());
+  const body=encodeURIComponent("RHL Provider Directory Export\n\nTotal providers: "+all.length+"\nExported: "+new Date().toLocaleString()+"\n\n--- Provider Summary ---\n\n"+all.map(p=>p.name+" | "+p.specialty+" | "+(p.phone||"no phone")).join("\n")+"\n\n(Full CSV data is best exported via the Download CSV button and attached to an email)");
+  window.location.href="mailto:"+email+"?subject="+subject+"&body="+body;
+  const now=new Date().toLocaleString();
+  saveSetting("lastExport",now);
+  document.getElementById("lastExport").textContent="Last export: "+now;
+  document.getElementById("exportStatus").textContent="Last export: "+now;
+  toast("Opening email with export...");
+}
+
+// ===================== SERVICE WORKER =====================
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+// ===================== INIT =====================
+renderChips();render();updateTriageBadge();
+</script>
+</body>
+</html>
