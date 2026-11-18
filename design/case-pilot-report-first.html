@@ -1,0 +1,253 @@
+<title>Case Pilot Report First</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a proposal sheet. Left column explains; right column shows two phone screens side by side (stacked on phones). */
+:root{
+  --bg:#eef1f4; --paper:#ffffff; --ink:#18212b; --muted:#5b6674; --line:#d7dde4;
+  --accent:#1f5f8b; --accent-ink:#ffffff; --accent-soft:#e3eef6;
+  --ok:#1d7a4c; --ok-soft:#e2f3ea; --warn:#9a5b00; --warn-soft:#fbefd9; --crit:#a3302a; --crit-soft:#f8e3e1;
+  --phone:#0f151c;
+  --f-text:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-report:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1419; --paper:#182029; --ink:#e6ebf0; --muted:#9aa6b3; --line:#2a3541;
+  --accent:#6cb2e3; --accent-ink:#0b1a26; --accent-soft:#1b2e3d;
+  --ok:#6fd19f; --ok-soft:#173226; --warn:#f0b65a; --warn-soft:#352812; --crit:#f08b84; --crit-soft:#3a1d1b;
+  --phone:#05080b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1419; --paper:#182029; --ink:#e6ebf0; --muted:#9aa6b3; --line:#2a3541;
+  --accent:#6cb2e3; --accent-ink:#0b1a26; --accent-soft:#1b2e3d;
+  --ok:#6fd19f; --ok-soft:#173226; --warn:#f0b65a; --warn-soft:#352812; --crit:#f08b84; --crit-soft:#3a1d1b;
+  --phone:#05080b; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-text);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 20px}
+h1{font-size:28px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.tag{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);background:var(--warn-soft);padding:4px 10px;border-radius:99px}
+.lede{max-width:68ch;color:var(--muted);margin:6px 0 0}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.9fr);gap:28px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
+.notes{display:grid;gap:18px;min-width:0}
+.notes section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.notes h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.notes ul{margin:0;padding-left:18px;display:grid;gap:6px}
+.notes li{max-width:60ch}
+.notes .q{border-color:var(--accent);background:var(--accent-soft)}
+
+.phones{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;min-width:0}
+.phonecol{display:grid;gap:10px;justify-items:center;min-width:0}
+.cap{font-size:13px;color:var(--muted);font-weight:600}
+.phone{width:340px;max-width:100%;background:var(--phone);border-radius:34px;padding:10px}
+.screen{background:var(--paper);border-radius:26px;overflow:hidden;height:690px;display:flex;flex-direction:column}
+
+/* App chrome */
+.bar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.back{font-size:20px;color:var(--accent);line-height:1}
+.who{min-width:0}
+.who b{display:block;font-size:16px}
+.who span{font-size:12px;color:var(--muted)}
+.body{flex:1;overflow:auto;padding:14px 16px;display:grid;gap:12px;align-content:start}
+
+.status{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px}
+.status.warn{background:var(--warn-soft);color:var(--warn)}
+.status.ok{background:var(--ok-soft);color:var(--ok)}
+.status .dot{width:10px;height:10px;border-radius:50%;background:currentColor;margin-top:5px;flex:none}
+.status b{display:block;font-size:14px}
+.status small{display:block;font-size:12.5px;color:var(--ink);opacity:.8}
+
+.report{border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.report .meta{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.report h3{font-family:var(--f-report);font-size:19px;font-weight:600;margin:6px 0 4px}
+.report p{font-family:var(--f-report);font-size:15px;line-height:1.55;margin:0 0 8px}
+.report h4{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
+.fade{position:relative;max-height:250px;overflow:hidden}
+.fade::after{content:"";position:absolute;inset:auto 0 0;height:56px;background:linear-gradient(transparent,var(--paper))}
+
+.seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{font:inherit;font-size:12.5px;padding:8px 4px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+
+.actions{display:grid;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line)}
+.btn{font:inherit;font-weight:600;font-size:14.5px;border-radius:10px;padding:11px 12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,.seg button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.count{background:var(--crit);color:var(--paper);font-size:12px;border-radius:99px;padding:1px 8px}
+.btn.primary .count{background:var(--accent-ink);color:var(--accent)}
+.more{font-size:12.5px;color:var(--muted);text-align:center}
+
+/* Review screen */
+.group h5{font-size:12px;letter-spacing:.05em;text-transform:uppercase;margin:4px 0 6px;display:flex;justify-content:space-between}
+.group.hi h5{color:var(--crit)} .group.md h5{color:var(--warn)} .group.lo h5{color:var(--muted)}
+.item{border:1px solid var(--line);border-radius:9px;padding:9px 11px;display:grid;gap:3px;margin-bottom:6px}
+.group.hi .item{border-left:4px solid var(--crit)}
+.group.md .item{border-left:4px solid var(--warn)}
+.item b{font-size:13.5px}
+.item span{font-size:12.5px;color:var(--muted)}
+.item .why{font-size:12px;color:var(--ink)}
+.collapsed{border:1px dashed var(--line);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+
+.toggle{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:13px}
+.toggle button{font:inherit;font-size:13px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.toggle button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.sample{font-size:12px;color:var(--muted);text-align:center;max-width:340px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Case Pilot: Report First</h1>
+      <p class="lede">Proposed person screen for your approval. Open a person and the latest approved report is the first thing you read. Calls, recordings and technical details move off the main screen.</p>
+    </div>
+    <span class="tag">Design only · nothing installed</span>
+  </header>
+
+  <div class="grid">
+    <div class="notes">
+      <section>
+        <h2>What changes</h2>
+        <ul>
+          <li>The <b>approved professional report</b> opens immediately. No extra button.</li>
+          <li>One status line at the top: <b>Current</b> or <b>Needs updating</b>, with the approval date and why.</li>
+          <li>The <b>three summary choices</b> sit directly above the report as one tap switch.</li>
+          <li>One clear button: <b>Review new items</b>. The 122 items are sorted into "Likely matters", "Maybe" and "Routine", so you see the important few first.</li>
+          <li>Call history, recordings, IDs and sync details move to <b>Calls &amp; recordings</b>, one tap away.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>What stays protected</h2>
+        <ul>
+          <li>All reports, recordings, conversations and approvals are kept. This is a layout change only.</li>
+          <li>Items waiting for review are never added to the report until you approve them.</li>
+          <li>Samsung Contacts are read and linked as today. Nothing is changed in them.</li>
+          <li>The installed v103 app and the live runner stay untouched until you approve.</li>
+        </ul>
+      </section>
+      <section class="q">
+        <h2>Please confirm</h2>
+        <ul>
+          <li>The three summary choices here are named <b>Brief</b>, <b>Professional</b> and <b>Full</b>. Tell me the exact names v103 uses and I'll match them.</li>
+          <li>Should "Update report" draft a new version for you to approve, keeping the current one live until then? That's what this design assumes.</li>
+          <li>Approve, or tell me what to change.</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="phones">
+      <div class="phonecol">
+        <span class="cap">1 · Open a person</span>
+        <div class="toggle" role="group" aria-label="Report state">
+          <button id="st-warn" aria-pressed="true">Needs updating</button>
+          <button id="st-ok" aria-pressed="false">Current</button>
+        </div>
+        <div class="phone"><div class="screen">
+          <div class="bar"><span class="back" aria-hidden="true">‹</span>
+            <div class="who"><b>Jordan Ellis</b><span>Sample person · linked to Samsung Contacts</span></div></div>
+          <div class="body">
+            <div id="status" class="status warn"><span class="dot"></span>
+              <div><b id="st-title">Needs updating</b>
+              <small id="st-text">Approved 3 Nov 2026. 4 new items may change it.</small></div></div>
+
+            <div class="seg" role="group" aria-label="Summary choice">
+              <button id="v-brief" aria-pressed="false">Brief</button>
+              <button id="v-pro" aria-pressed="true">Professional</button>
+              <button id="v-full" aria-pressed="false">Full</button>
+            </div>
+
+            <article class="report">
+              <div class="meta"><span>Approved report · v6</span><span>3 Nov 2026</span></div>
+              <div id="rep" class="fade">
+                <h3>Case summary</h3>
+                <p>Jordan was referred on 14 Sep 2026 for outpatient counselling after a work-related injury. Intake is complete and a provider match has been made with a licensed therapist in the client's area.</p>
+                <h4>Current position</h4>
+                <p>Insurance pre-authorisation was submitted on 28 Oct and is awaiting a decision. The client prefers evening appointments and has asked for telehealth where possible.</p>
+                <h4>Next steps</h4>
+                <p>Confirm authorisation, book the first session, and send the provider the intake summary.</p>
+              </div>
+            </article>
+            <p class="more">Tap "View full report" to read every section</p>
+          </div>
+          <div class="actions">
+            <button class="btn primary">Review new items <span class="count">4 likely matter</span></button>
+            <div class="row2">
+              <button class="btn">View full report</button>
+              <button class="btn">Update report</button>
+            </div>
+            <button class="btn" style="font-weight:500;font-size:13.5px">Calls &amp; recordings</button>
+          </div>
+        </div></div>
+        <p class="sample">Sample content for the design only. Your real people and reports are not shown here.</p>
+      </div>
+
+      <div class="phonecol">
+        <span class="cap">2 · Review new items</span>
+        <div class="toggle" aria-hidden="true" style="visibility:hidden"><button>.</button></div>
+        <div class="phone"><div class="screen">
+          <div class="bar"><span class="back" aria-hidden="true">‹</span>
+            <div class="who"><b>New items for Jordan</b><span>122 waiting · none added to the report yet</span></div></div>
+          <div class="body">
+            <div class="group hi">
+              <h5><span>Likely matters</span><span>4</span></h5>
+              <div class="item"><b>Call with insurer · 12 Nov</b><span>Recording · 6 min</span>
+                <span class="why">Pre-authorisation approved for 8 sessions.</span></div>
+              <div class="item"><b>Call with client · 10 Nov</b><span>Recording · 11 min</span>
+                <span class="why">New phone number and change of address.</span></div>
+              <div class="item"><b>Message from provider · 9 Nov</b><span>Conversation</span>
+                <span class="why">First available slot is 24 Nov, 6 pm.</span></div>
+            </div>
+            <div class="group md">
+              <h5><span>Maybe</span><span>11</span></h5>
+              <div class="item"><b>Call with client · 6 Nov</b><span>Recording · 3 min</span>
+                <span class="why">Asked about parking at the clinic.</span></div>
+            </div>
+            <div class="group lo">
+              <h5><span>Routine</span><span>107</span></h5>
+              <div class="collapsed"><span>Missed calls, voicemails with no content, duplicates</span><span>Show</span></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary">Add 4 to a draft report</button>
+            <button class="btn">Choose items one by one</button>
+          </div>
+        </div></div>
+        <p class="sample">Nothing reaches the approved report until you approve the new draft.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var S={warn:{c:"warn",t:"Needs updating",x:"Approved 3 Nov 2026. 4 new items may change it."},
+         ok:{c:"ok",t:"Current",x:"Approved 3 Nov 2026. Nothing new since then."}};
+  function setState(k){
+    var s=S[k],el=document.getElementById("status");
+    el.className="status "+s.c;
+    document.getElementById("st-title").textContent=s.t;
+    document.getElementById("st-text").textContent=s.x;
+    document.getElementById("st-warn").setAttribute("aria-pressed",k==="warn");
+    document.getElementById("st-ok").setAttribute("aria-pressed",k==="ok");
+  }
+  document.getElementById("st-warn").onclick=function(){setState("warn")};
+  document.getElementById("st-ok").onclick=function(){setState("ok")};
+  var R={
+    "v-brief":'<h3>Brief</h3><p>Referred 14 Sep for counselling after a work injury. Therapist matched. Waiting on insurance authorisation (sent 28 Oct). Prefers evening telehealth.</p>',
+    "v-pro":document.getElementById("rep").innerHTML,
+    "v-full":'<h3>Full report</h3><h4>Background</h4><p>Referred on 14 Sep 2026 by the employer’s case manager following a work-related injury in August.</p><h4>Intake</h4><p>Completed 21 Sep. Goals agreed: manage sleep disruption and return-to-work anxiety.</p><h4>Provider match</h4><p>Licensed therapist, in network, offers evening telehealth.</p><h4>Insurance</h4><p>Pre-authorisation submitted 28 Oct. Decision pending.</p><h4>Next steps</h4><p>Confirm authorisation, book first session, share intake summary with provider.</p>'
+  };
+  ["v-brief","v-pro","v-full"].forEach(function(id){
+    document.getElementById(id).onclick=function(){
+      document.getElementById("rep").innerHTML=R[id];
+      ["v-brief","v-pro","v-full"].forEach(function(o){document.getElementById(o).setAttribute("aria-pressed",o===id)});
+    };
+  });
+})();
+</script>
